@@ -521,6 +521,16 @@ fmi3Status fmi3DoStep(fmi3Instance instance, fmi3Float64 currentCommunicationPoi
     return doStep(comp, currentCommunicationPoint, currentCommunicationPoint + communicationStepSize);
 }
 
+/* Inquire slave status */
+
+fmi3Status fmi3GetDoStepPendingStatus(fmi3Instance instance, fmi3Status* status, fmi3String* message) {
+    return fmi3Error;
+}
+
+fmi3Status fmi3GetDoStepDiscardedStatus(fmi3Instance instance, fmi3Boolean* terminate, fmi3Float64* lastSuccessfulTime) {
+    return fmi3Error;
+}
+
 // ---------------------------------------------------------------------------
 // Functions for fmi3 for Model Exchange
 // ---------------------------------------------------------------------------
