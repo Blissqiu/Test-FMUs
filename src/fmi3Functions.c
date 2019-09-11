@@ -542,8 +542,9 @@ fmi3Status fmi3ExitConfigurationMode(fmi3Instance instance) {
 // TODO: fmi3SetIntervalFraction
 
 fmi3Status fmi3NewDiscreteStates(fmi3Instance instance, fmi3EventInfo *eventInfo) {
+
     ModelInstance *comp = (ModelInstance *)instance;
-    int timeEvent = 0;
+
     if (invalidState(comp, "fmi3NewDiscreteStates", MASK_fmi3NewDiscreteStates))
         return fmi3Error;
     
@@ -551,10 +552,6 @@ fmi3Status fmi3NewDiscreteStates(fmi3Instance instance, fmi3EventInfo *eventInfo
     comp->terminateSimulation = fmi3False;
     comp->nominalsOfContinuousStatesChanged = fmi3False;
     comp->valuesOfContinuousStatesChanged = fmi3False;
-    
-    if (comp->nextEventTimeDefined && comp->nextEventTime <= comp->time) {
-        timeEvent = 1;
-    }
     
     eventUpdate(comp);
     
