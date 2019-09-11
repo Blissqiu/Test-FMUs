@@ -123,6 +123,10 @@
 // Private helpers used below to validate function arguments
 // ---------------------------------------------------------------------------
 
+#define NOT_IMPLEMENTED ModelInstance *comp = (ModelInstance *)instance; \
+    logError(comp, "Function is not implemented."); \
+    return fmi3Error;
+
 static fmi3Status unsupportedFunction(fmi3Instance instance, const char *fName, int statesExpected) {
     ModelInstance *comp = (ModelInstance *)instance;
     if (invalidState(comp, fName, statesExpected))
@@ -254,7 +258,11 @@ fmi3Status fmi3Reset(fmi3Instance instance) {
     return fmi3OK;
 }
 
-// TODO: fmi3GetFloat32
+fmi3Status fmi3GetFloat32(fmi3Instance instance,
+                          const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                          fmi3Float32 values[], size_t nValues) {
+    NOT_IMPLEMENTED
+}
 
 fmi3Status fmi3GetFloat64(fmi3Instance instance, const fmi3ValueReference vr[], size_t nvr, fmi3Float64 value[], size_t nValues) {
 
@@ -277,13 +285,29 @@ fmi3Status fmi3GetFloat64(fmi3Instance instance, const fmi3ValueReference vr[], 
     GET_VARIABLES(Float64)
 }
 
-// TODO: fmi3GetInt8
+fmi3Status fmi3GetInt8(fmi3Instance instance,
+                       const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                       fmi3Int8 values[], size_t nValues) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3GetUInt8
+fmi3Status fmi3GetUInt8(fmi3Instance instance,
+                        const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                        fmi3UInt8 values[], size_t nValues) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3GetInt16
+fmi3Status fmi3GetInt16(fmi3Instance instance,
+                        const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                        fmi3Int16 values[], size_t nValues) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3GetUInt16
+fmi3Status fmi3GetUInt16(fmi3Instance instance,
+                         const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                         fmi3UInt16 values[], size_t nValues) {
+    NOT_IMPLEMENTED
+}
 
 fmi3Status fmi3GetInt32(fmi3Instance instance, const fmi3ValueReference vr[], size_t nvr, fmi3Int32 value[], size_t nValues) {
 
@@ -306,11 +330,23 @@ fmi3Status fmi3GetInt32(fmi3Instance instance, const fmi3ValueReference vr[], si
     GET_VARIABLES(Int32)
 }
 
-// TODO: fmi3GetUInt32
+fmi3Status fmi3GetUInt32(fmi3Instance instance,
+                         const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                         fmi3UInt32 values[], size_t nValues) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3GetInt64
+fmi3Status fmi3GetInt64(fmi3Instance instance,
+                        const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                        fmi3Int64 values[], size_t nValues) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3GetUInt64
+fmi3Status fmi3GetUInt64(fmi3Instance instance,
+                         const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                         fmi3UInt64 values[], size_t nValues) {
+    NOT_IMPLEMENTED
+}
 
 fmi3Status fmi3GetBoolean(fmi3Instance instance, const fmi3ValueReference vr[], size_t nvr, fmi3Boolean value[], size_t nValues) {
 
@@ -370,7 +406,12 @@ fmi3Status fmi3GetBinary(fmi3Instance instance, const fmi3ValueReference vr[], s
     return status;
 }
 
-// TODO: fmi3SetFloat32
+fmi3Status fmi3SetFloat32(fmi3Instance instance,
+                          const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                          const fmi3Float32 values[], size_t nValues) {
+    NOT_IMPLEMENTED
+}
+
 
 fmi3Status fmi3SetFloat64(fmi3Instance instance, const fmi3ValueReference vr[], size_t nvr, const fmi3Float64 value[], size_t nValues) {
 
@@ -388,13 +429,29 @@ fmi3Status fmi3SetFloat64(fmi3Instance instance, const fmi3ValueReference vr[], 
     SET_VARIABLES(Float64)
 }
 
-// TODO: fmi3SetInt8
+fmi3Status fmi3SetInt8(fmi3Instance instance,
+                       const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                       const fmi3Int8 values[], size_t nValues) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3SetUInt8
+fmi3Status fmi3SetUInt8(fmi3Instance instance,
+                        const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                        const fmi3UInt8 values[], size_t nValues) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3SetInt16
+fmi3Status fmi3SetInt16(fmi3Instance instance,
+                        const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                        const fmi3Int16 values[], size_t nValues) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3SetUInt16
+fmi3Status fmi3SetUInt16(fmi3Instance instance,
+                         const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                         const fmi3UInt16 values[], size_t nValues) {
+    NOT_IMPLEMENTED
+}
 
 fmi3Status fmi3SetInt32(fmi3Instance instance, const fmi3ValueReference vr[], size_t nvr, const fmi3Int32 value[], size_t nValues) {
 
@@ -412,11 +469,23 @@ fmi3Status fmi3SetInt32(fmi3Instance instance, const fmi3ValueReference vr[], si
     SET_VARIABLES(Int32)
 }
 
-// TODO: fmi3SetUInt32
+fmi3Status fmi3SetUInt32(fmi3Instance instance,
+                         const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                         const fmi3UInt32 values[], size_t nValues) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3SetInt64
+fmi3Status fmi3SetInt64(fmi3Instance instance,
+                        const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                        const fmi3Int64 values[], size_t nValues) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3SetUInt64
+fmi3Status fmi3SetUInt64(fmi3Instance instance,
+                         const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                         const fmi3UInt64 values[], size_t nValues) {
+    NOT_IMPLEMENTED
+}
 
 fmi3Status fmi3SetBoolean(fmi3Instance instance, const fmi3ValueReference vr[], size_t nvr, const fmi3Boolean value[], size_t nValues) {
 
@@ -466,9 +535,21 @@ fmi3Status fmi3SetBinary(fmi3Instance instance, const fmi3ValueReference vr[], s
     return status;
 }
 
-// TODO: fmi3GetNumberOfVariableDependencies
+fmi3Status fmi3GetNumberOfVariableDependencies(fmi3Instance instance,
+                                               fmi3ValueReference valueReference,
+                                               size_t* nDependencies) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3GetVariableDependencies
+fmi3Status fmi3GetVariableDependencies(fmi3Instance instance,
+                                       fmi3ValueReference dependent,
+                                       size_t elementIndicesOfDependent[],
+                                       fmi3ValueReference independents[],
+                                       size_t elementIndicesOfIndependents[],
+                                       fmi3DependencyKind dependencyKinds[],
+                                       size_t nDependencies) {
+    NOT_IMPLEMENTED
+}
 
 fmi3Status fmi3GetFMUState(fmi3Instance instance, fmi3FMUState* FMUState) {
     return unsupportedFunction(instance, "fmi3GetFMUState", MASK_fmi3GetFMUState);
@@ -529,17 +610,41 @@ fmi3Status fmi3ExitConfigurationMode(fmi3Instance instance) {
     return fmi3Error;
 }
 
-// TODO: fmi3SetClock
+fmi3Status fmi3SetClock(fmi3Instance instance,
+                        const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                        const fmi3Boolean value[], const fmi3Boolean *subactive) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3GetClock
+fmi3Status fmi3GetClock(fmi3Instance instance,
+                            const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                        fmi3Boolean value[]) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3GetIntervalDecimal
+fmi3Status fmi3GetIntervalDecimal(fmi3Instance instance,
+                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                                  fmi3Float64 interval[]) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3SetIntervalDecimal
+fmi3Status fmi3SetIntervalDecimal(fmi3Instance instance,
+                                      const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                                  fmi3Float64 interval[]) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3GetIntervalFraction
+fmi3Status fmi3GetIntervalFraction(fmi3Instance instance,
+                                       const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                                   fmi3UInt64 intervalCounter[], fmi3UInt64 resolution[]) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3SetIntervalFraction
+fmi3Status fmi3SetIntervalFraction(fmi3Instance instance,
+                                   const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                                   fmi3UInt64 intervalCounter[], fmi3UInt64 resolution[]) {
+    NOT_IMPLEMENTED
+}
 
 fmi3Status fmi3NewDiscreteStates(fmi3Instance instance, fmi3EventInfo *eventInfo) {
 
@@ -690,19 +795,39 @@ fmi3Status fmi3GetNominalsOfContinuousStates(fmi3Instance instance, fmi3Float64 
     return fmi3OK;
 }
 
-// TODO: fmi3GetNumberOfEventIndicators
+fmi3Status fmi3GetNumberOfEventIndicators(fmi3Instance instance, size_t* nz) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3GetNumberOfContinuousStates
+fmi3Status fmi3GetNumberOfContinuousStates(fmi3Instance instance, size_t* nx) {
+    NOT_IMPLEMENTED
+}
 
 /***************************************************
  Functions for FMI3 for Co-Simulation
  ****************************************************/
 
-// TODO: fmi3EnterStepMode
+fmi3Status fmi3EnterStepMode(fmi3Instance instance) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3SetInputDerivatives
+fmi3Status fmi3SetInputDerivatives(fmi3Instance instance,
+                                   const fmi3ValueReference valueReferences[],
+                                   size_t nValueReferences,
+                                   const fmi3Int32 orders[],
+                                   const fmi3Float64 values[],
+                                   size_t nValues) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3GetOutputDerivatives
+fmi3Status fmi3GetOutputDerivatives(fmi3Instance instance,
+                                    const fmi3ValueReference valueReferences[],
+                                    size_t nValueReferences,
+                                    const fmi3Int32 orders[],
+                                    fmi3Float64 values[],
+                                    size_t nValues) {
+    NOT_IMPLEMENTED
+}
 
 fmi3Status fmi3DoStep(fmi3Instance instance,
                       fmi3Float64 currentCommunicationPoint,
@@ -721,9 +846,15 @@ fmi3Status fmi3DoStep(fmi3Instance instance,
     return doStep(comp, currentCommunicationPoint, currentCommunicationPoint + communicationStepSize);
 }
 
-// TODO: fmi3ActivateModelPartition
+fmi3Status fmi3ActivateModelPartition(fmi3Instance instance,
+                                      fmi3ValueReference clockReference,
+                                      fmi3Float64 activationTime) {
+    NOT_IMPLEMENTED
+}
 
-// TODO: fmi3DoEarlyReturn
+fmi3Status fmi3DoEarlyReturn(fmi3Instance instance, fmi3Float64 earlyReturnTime) {
+    NOT_IMPLEMENTED
+}
 
 fmi3Status fmi3GetDoStepDiscardedStatus(fmi3Instance instance, fmi3Boolean* terminate, fmi3Float64* lastSuccessfulTime) {
     return fmi3Error;
