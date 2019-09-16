@@ -303,10 +303,9 @@ fmi3Status fmi3GetInt16(fmi3Instance instance,
     NOT_IMPLEMENTED
 }
 
-fmi3Status fmi3GetUInt16(fmi3Instance instance,
-                         const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                         fmi3UInt16 values[], size_t nValues) {
-    NOT_IMPLEMENTED
+fmi3Status fmi3GetUInt16(fmi3Instance instance, const fmi3ValueReference vr[], size_t nvr, fmi3UInt16 value[], size_t nValues) {
+    ModelInstance *comp = (ModelInstance *)instance;
+    GET_VARIABLES(UInt16)
 }
 
 fmi3Status fmi3GetInt32(fmi3Instance instance, const fmi3ValueReference vr[], size_t nvr, fmi3Int32 value[], size_t nValues) {
@@ -448,9 +447,12 @@ fmi3Status fmi3SetInt16(fmi3Instance instance,
 }
 
 fmi3Status fmi3SetUInt16(fmi3Instance instance,
-                         const fmi3ValueReference valueReferences[], size_t nValueReferences,
-                         const fmi3UInt16 values[], size_t nValues) {
-    NOT_IMPLEMENTED
+                         const fmi3ValueReference vr[], size_t nvr,
+                         const fmi3UInt16 value[], size_t nValues) {
+    
+    ModelInstance *comp = (ModelInstance *)instance;
+    
+    SET_VARIABLES(UInt16)
 }
 
 fmi3Status fmi3SetInt32(fmi3Instance instance, const fmi3ValueReference vr[], size_t nvr, const fmi3Int32 value[], size_t nValues) {
@@ -613,7 +615,18 @@ fmi3Status fmi3ExitConfigurationMode(fmi3Instance instance) {
 fmi3Status fmi3SetClock(fmi3Instance instance,
                         const fmi3ValueReference valueReferences[], size_t nValueReferences,
                         const fmi3Boolean value[], const fmi3Boolean *subactive) {
-    NOT_IMPLEMENTED
+    
+    Status status = OK;
+    
+    for (size_t i = 0; i < nValueReferences; i++) {
+        if (value[i]) {
+            Status s = activateClock(instance,  valueReferences[i]);
+            status = max(status, s);
+            if (status > Warning) return status;
+        }
+    }
+    
+    return status;
 }
 
 fmi3Status fmi3GetClock(fmi3Instance instance,

@@ -127,8 +127,8 @@ if (${FMI_VERSION} EQUAL 1 AND "${FMI_TYPE}" STREQUAL CS)
 endif()
 
 target_include_directories(${TARGET_NAME} PRIVATE
-  "include"
-  "${MODEL_NAME}"
+  include
+  ${MODEL_NAME}
 )
 
 set(FMU_BUILD_DIR temp/${MODEL_NAME})
@@ -231,3 +231,21 @@ add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
 )
 
 endforeach(MODEL_NAME)
+
+# Tests
+add_executable (PositionControl_test
+  include/fmi3Functions.h
+  include/fmi3FunctionTypes.h
+  include/fmi3PlatformTypes.h
+  tests/util.h
+  PositionControl/config.h
+  PositionControl/model.c
+  src/fmi3Functions.c
+  src/slave.c
+  tests/PositionControl_test.c
+)
+target_include_directories(PositionControl_test PRIVATE include PositionControl)
+target_compile_definitions(PositionControl_test PRIVATE
+  FMI_VERSION=3
+  # DISABLE_PREFIX
+)

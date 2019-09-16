@@ -11,11 +11,11 @@
   <DefaultExperiment startTime="0" stopTime="1"/>
 
   <ModelVariables>
-    <Float64 name="Reference"         valueReference="0" causality="input"/>
-    <Float64 name="Position"          valueReference="1" causality="input"/>
-    <Float64 name="Upi"               valueReference="2" causality="output"/>
-    <Clock   name="TimingEvent"       valueReference="3" causality="inferred" variability="clock" clockType="communicationPoint" priority="1" periodic="true" strict="true" intervalCounter="1" resolution="1000"/>
-    <Clock   name="DataReceivedEvent" valueReference="4" causality="inferred" variability="clock" clockType="communicationPoint" priority="2"/>
+    <UInt16 name="Reference"          valueReference="0" causality="input" start="32767"/>
+    <UInt16 name="Position"           valueReference="1" causality="input" start="32767"/>
+    <UInt16 name="Upi"                valueReference="2" causality="output"/>
+    <Clock  name="TimingEvent"        valueReference="3" causality="inferred" variability="clock" clockType="communicationPoint" priority="1" periodic="true" strict="true" intervalCounter="1" resolution="1000"/>
+    <Clock  name="DataReceivedEvent"  valueReference="4" causality="inferred" variability="clock" clockType="communicationPoint" priority="2"/>
   </ModelVariables>
 
   <ModelStructure>

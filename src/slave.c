@@ -157,13 +157,16 @@ bool invalidState(ModelInstance *comp, const char *f, int statesExpected) {
 		return true;
 	}
 
-	if (!(comp->state & statesExpected)) {
-		comp->state = modelError;
-		logError(comp, "%s: Illegal call sequence.", f);
-		return true;
-	}
-	
-	return false;
+    // TODO: add missing states and check state
+    return false;
+    
+//    if (!(comp->state & statesExpected)) {
+//        comp->state = modelError;
+//        logError(comp, "%s: Illegal call sequence.", f);
+//        return true;
+//    }
+//
+//    return false;
 }
 
 bool nullPointer(ModelInstance* comp, const char *f, const char *arg, const void *p) {
@@ -263,6 +266,16 @@ Status getFloat64(ModelInstance* comp, ValueReference vr, double *value, size_t 
 }
 #endif
 
+#ifndef GET_UINT16
+Status getUInt16(ModelInstance* comp, ValueReference vr, int *value, size_t *index) {
+    UNUSED(comp)
+    UNUSED(vr)
+    UNUSED(value)
+    UNUSED(index)
+    return Error;
+}
+#endif
+
 #ifndef GET_INT32
 Status getInt32(ModelInstance* comp, ValueReference vr, int *value, size_t *index) {
 	UNUSED(comp)
@@ -310,6 +323,16 @@ Status setFloat64(ModelInstance* comp, ValueReference vr, const double *value, s
 	UNUSED(vr)
 	UNUSED(value)
 	UNUSED(index)
+    return Error;
+}
+#endif
+
+#ifndef SET_UINT16
+Status setUInt16(ModelInstance* comp, ValueReference vr, const uint16_t *value, size_t *index) {
+    UNUSED(comp)
+    UNUSED(vr)
+    UNUSED(value)
+    UNUSED(index)
     return Error;
 }
 #endif
