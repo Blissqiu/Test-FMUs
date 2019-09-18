@@ -267,7 +267,7 @@ Status getFloat64(ModelInstance* comp, ValueReference vr, double *value, size_t 
 #endif
 
 #ifndef GET_UINT16
-Status getUInt16(ModelInstance* comp, ValueReference vr, int *value, size_t *index) {
+Status getUInt16(ModelInstance* comp, ValueReference vr, uint16_t *value, size_t *index) {
     UNUSED(comp)
     UNUSED(vr)
     UNUSED(value)
@@ -374,6 +374,14 @@ Status setBinary(ModelInstance* comp, ValueReference vr, const size_t size[], co
 	UNUSED(size)
 	UNUSED(value)
 	UNUSED(index)
+    return Error;
+}
+#endif
+
+#ifndef ACTIVATE_CLOCK
+Status activateClock(ModelInstance* comp, ValueReference vr) {
+    UNUSED(comp)
+    UNUSED(vr)
     return Error;
 }
 #endif
