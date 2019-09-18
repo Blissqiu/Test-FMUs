@@ -9,6 +9,7 @@
 
 #include <stddef.h>  // for size_t
 #include <stdbool.h> // for bool
+#include <stdint.h>
 
 #include "config.h"
 
