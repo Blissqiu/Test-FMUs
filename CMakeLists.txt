@@ -266,7 +266,7 @@ if (${FMI_VERSION} EQUAL 3)
   )
   target_include_directories(cs_early_return PRIVATE include BouncingBall)
   target_compile_definitions(cs_early_return PRIVATE FMI_VERSION=3)
-  if(UNIX AND NOT APPLE))
+  if(UNIX AND NOT APPLE)
     target_link_libraries(cs_early_return m)
   endif()
 
