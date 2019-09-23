@@ -232,37 +232,42 @@ add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
 
 endforeach(MODEL_NAME)
 
-# Tests
-add_executable (PositionControl_test
-  include/fmi3Functions.h
-  include/fmi3FunctionTypes.h
-  include/fmi3PlatformTypes.h
-  tests/util.h
-  PositionControl/config.h
-  PositionControl/model.c
-  src/fmi3Functions.c
-  src/slave.c
-  tests/PositionControl_test.c
-)
-target_include_directories(PositionControl_test PRIVATE include PositionControl)
-target_compile_definitions(PositionControl_test PRIVATE
-  FMI_VERSION=3
-  # DISABLE_PREFIX
-)
 
-add_executable (BouncingBall_test
-  include/fmi3Functions.h
-  include/fmi3FunctionTypes.h
-  include/fmi3PlatformTypes.h
-  tests/util.h
-  BouncingBall/config.h
-  BouncingBall/model.c
-  src/fmi3Functions.c
-  src/slave.c
-  tests/BouncingBall_test.c
-)
-target_include_directories(BouncingBall_test PRIVATE include BouncingBall)
-target_compile_definitions(BouncingBall_test PRIVATE
-  FMI_VERSION=3
-  # DISABLE_PREFIX
-)
+# FMI 3 Examples
+if (${FMI_VERSION} EQUAL 3)
+
+  add_executable (cs_clocked
+    include/fmi3Functions.h
+    include/fmi3FunctionTypes.h
+    include/fmi3PlatformTypes.h
+    examples/util.h
+    PositionControl/config.h
+    PositionControl/model.c
+    src/fmi3Functions.c
+    src/slave.c
+    examples/cs_clocked.c
+  )
+  target_include_directories(cs_clocked PRIVATE include PositionControl)
+  target_compile_definitions(cs_clocked PRIVATE FMI_VERSION=3)
+  if(UNIX AND NOT APPLE)
+    target_link_libraries(cs_clocked m)
+  endif()
+
+  add_executable (cs_early_return
+    include/fmi3Functions.h
+    include/fmi3FunctionTypes.h
+    include/fmi3PlatformTypes.h
+    examples/util.h
+    BouncingBall/config.h
+    BouncingBall/model.c
+    src/fmi3Functions.c
+    src/slave.c
+    examples/cs_early_return.c
+  )
+  target_include_directories(cs_early_return PRIVATE include BouncingBall)
+  target_compile_definitions(cs_early_return PRIVATE FMI_VERSION=3)
+  if(UNIX AND NOT APPLE))
+    target_link_libraries(cs_early_return m)
+  endif()
+
+endif()
