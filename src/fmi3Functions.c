@@ -161,6 +161,9 @@ fmi3Instance fmi3Instantiate(fmi3String        instanceName,
                              fmi3Boolean       visible,
                              fmi3Boolean       loggingOn,
                              const fmi3CoSimulationConfiguration* fmuCoSimulationConfiguration) {
+    
+    const bool returnEarly = fmuCoSimulationConfiguration &&
+        fmuCoSimulationConfiguration->coSimulationMode == fmi3ModeHybridCoSimulation;
 
 	return createModelInstance(
 		(loggerType)functions->logMessage,
@@ -173,8 +176,8 @@ fmi3Instance fmi3Instantiate(fmi3String        instanceName,
 		fmuResourceLocation,
 		loggingOn,
 		fmuType,
-        fmuCoSimulationConfiguration->coSimulationMode == fmi3ModeHybridCoSimulation
-	);
+        returnEarly
+    );
 }
 
 void fmi3FreeInstance(fmi3Instance instance) {
