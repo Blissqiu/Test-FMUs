@@ -8,42 +8,61 @@
 
 #define CHECK_STATUS(S) status = S; if (status != fmi3OK) goto out;
 
-FILE* pFile;
 
-fmi3Status recordVariables(fmi3Instance instance, fmi3Float64 time) {
+typedef struct {
+    fmi3Instance instance;
+    FILE* outputFile;
+    fmi3Float64 intermediateUpdateTime;
+} InstanceEnvironment;
+
+fmi3Status recordVariables(InstanceEnvironment instanceEnvironment, fmi3Float64 time) {
     fmi3ValueReference outputsVRs[2] = { vr_h, vr_v };
     fmi3Float64 y[2];
-    fmi3Status status = fmi3GetFloat64(instance, outputsVRs, 2, y, 2);
-    fprintf(pFile, "%g,%g,%g\n", time, y[0], y[1]);
+    fmi3Status status = fmi3GetFloat64(instanceEnvironment.instance, outputsVRs, 2, y, 2);
+    fprintf(instanceEnvironment.outputFile, "%g,%g,%g\n", time, y[0], y[1]);
     return status;
 }
-
 
 //////////////////////////
 // Define callback
 
 // Global variables
-fmi3IntermediateUpdateInfo s_intermediateInfo;
-fmi3Instance s_instance;
+//fmi3IntermediateUpdateInfo s_intermediateInfo;
 
 // Callback
-fmi3Status intermediateUpdate(fmi3InstanceEnvironment componentEnvironment, fmi3IntermediateUpdateInfo* intermediateUpdateInfo)
+fmi3Status cb_intermediateUpdate(fmi3InstanceEnvironment instanceEnvironment, fmi3IntermediateUpdateInfo* intermediateUpdateInfo)
 {
     // Save intermediateInfo for later use
-    s_intermediateInfo = *intermediateUpdateInfo;
+//    s_intermediateInfo = *intermediateUpdateInfo;
+    InstanceEnvironment* env = (InstanceEnvironment*)instanceEnvironment;
+    
+    env->intermediateUpdateTime = intermediateUpdateInfo->intermediateUpdateTime;
     
     // stop here
-    fmi3Status status = fmi3DoEarlyReturn(*((fmi3Instance*)componentEnvironment), intermediateUpdateInfo->intermediateUpdateTime);
+    fmi3Status status = fmi3DoEarlyReturn(env->instance, intermediateUpdateInfo->intermediateUpdateTime);
     
     return status;
 }
 
 int main(int argc, char* argv[]) {
     
-    pFile = fopen ("BouncingBall_out.csv", "w");
-    fprintf(pFile, "time,h,v\n");
-    
     puts("Running BouncingBall test... ");
+    
+    InstanceEnvironment instanceEnvironment = {
+        .instance=NULL,
+        .outputFile=NULL,
+        .intermediateUpdateTime=0
+    };
+    
+    instanceEnvironment.outputFile = fopen("BouncingBall_out.csv", "w");
+    
+    if (!instanceEnvironment.outputFile) {
+        puts("Failed to open output file.");
+        return EXIT_FAILURE;
+    }
+    
+    // write the header of the CSV
+    fputs("time,h,v\n", instanceEnvironment.outputFile);
     
     fmi3CallbackFunctions callbacks = { NULL };
     
@@ -51,7 +70,7 @@ int main(int argc, char* argv[]) {
     callbacks.freeMemory     = cb_freeMemory;
     callbacks.logMessage     = cb_logMessage;
     // Signal that early return is supported by master
-    callbacks.intermediateUpdate = intermediateUpdate;
+    callbacks.intermediateUpdate = cb_intermediateUpdate;
     callbacks.lockPreemption     = NULL; // Preemption not active
     callbacks.unlockPreemption   = NULL; // Preemption not active
     
@@ -59,11 +78,10 @@ int main(int argc, char* argv[]) {
     //////////////////////////
     // Initialization sub-phase
     
-    fmi3Instance s;
     fmi3EventInfo eventInfo;
     
     // Create pointer to information for identifying the FMU in callbacks
-    callbacks.instanceEnvironment = &s;
+    callbacks.instanceEnvironment = &instanceEnvironment;
     
     //set Co-Simulation mode
     fmi3CoSimulationConfiguration csConfig;
@@ -73,12 +91,14 @@ int main(int argc, char* argv[]) {
     csConfig.coSimulationMode = fmi3ModeHybridCoSimulation;
     
     // Instantiate slave
-    s = fmi3Instantiate("instance", fmi3CoSimulation, MODEL_GUID, "", &callbacks, fmi3False, fmi3False, &csConfig);
+    fmi3Instance s = fmi3Instantiate("instance", fmi3CoSimulation, MODEL_GUID, "", &callbacks, fmi3False, fmi3False, &csConfig);
     
     if (s == NULL) {
         puts("Failed to instantiate FMU.");
         return EXIT_FAILURE;
     }
+    
+    instanceEnvironment.instance = s;
     
     // Start and stop time
     fmi3Float64 startTime = 0;
@@ -116,7 +136,7 @@ int main(int argc, char* argv[]) {
                     if (earlyReturn) {
                         CHECK_STATUS(fmi3EnterEventMode(s));
                         step = 0;
-                        tc = s_intermediateInfo.intermediateUpdateTime;
+                        tc = instanceEnvironment.intermediateUpdateTime;
                     } else {
                         tc += step;
                         step = h;
@@ -140,7 +160,7 @@ int main(int argc, char* argv[]) {
         
         // Get outputs
         // fmi3GetReal/Integer/Boolean/String(s, ...);
-        CHECK_STATUS(recordVariables(s, tc))
+        CHECK_STATUS(recordVariables(instanceEnvironment, tc))
         
         // Set inputs
         // fmi3SetReal/Integer/Boolean/String(s, ...);
