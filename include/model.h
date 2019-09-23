@@ -116,7 +116,7 @@ typedef struct {
 	double *prez;
     
     // hybrid co-simulation
-    double earlyReturnTime;
+    bool returnEarly;
     
 } ModelInstance;
 

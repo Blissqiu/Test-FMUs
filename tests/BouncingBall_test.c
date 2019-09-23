@@ -30,28 +30,28 @@ fmi3Status recordVariables(InstanceEnvironment instanceEnvironment, fmi3Float64 
 //fmi3IntermediateUpdateInfo s_intermediateInfo;
 
 // Callback
-fmi3Status cb_intermediateUpdate(fmi3InstanceEnvironment instanceEnvironment, fmi3IntermediateUpdateInfo* intermediateUpdateInfo)
-{
-    // Save intermediateInfo for later use
-//    s_intermediateInfo = *intermediateUpdateInfo;
+fmi3Status cb_intermediateUpdate(fmi3InstanceEnvironment instanceEnvironment, fmi3IntermediateUpdateInfo* intermediateUpdateInfo) {
     InstanceEnvironment* env = (InstanceEnvironment*)instanceEnvironment;
-    
+    // remember intermediateUpdateTime
     env->intermediateUpdateTime = intermediateUpdateInfo->intermediateUpdateTime;
-    
     // stop here
-    fmi3Status status = fmi3DoEarlyReturn(env->instance, intermediateUpdateInfo->intermediateUpdateTime);
-    
-    return status;
+    return fmi3DoEarlyReturn(env->instance, env->intermediateUpdateTime);
 }
 
 int main(int argc, char* argv[]) {
     
     puts("Running BouncingBall test... ");
     
+    // Start and stop time
+    const fmi3Float64 startTime = 0;
+    const fmi3Float64 stopTime = 3;
+    // Communication constant step size
+    const fmi3Float64 h = 0.01;
+    
     InstanceEnvironment instanceEnvironment = {
-        .instance=NULL,
-        .outputFile=NULL,
-        .intermediateUpdateTime=0
+        .instance               = NULL,
+        .outputFile             = NULL,
+        .intermediateUpdateTime = startTime
     };
     
     instanceEnvironment.outputFile = fopen("BouncingBall_out.csv", "w");
@@ -64,16 +64,14 @@ int main(int argc, char* argv[]) {
     // write the header of the CSV
     fputs("time,h,v\n", instanceEnvironment.outputFile);
     
-    fmi3CallbackFunctions callbacks = { NULL };
-    
-    callbacks.allocateMemory = cb_allocateMemory;
-    callbacks.freeMemory     = cb_freeMemory;
-    callbacks.logMessage     = cb_logMessage;
-    // Signal that early return is supported by master
-    callbacks.intermediateUpdate = cb_intermediateUpdate;
-    callbacks.lockPreemption     = NULL; // Preemption not active
-    callbacks.unlockPreemption   = NULL; // Preemption not active
-    
+    fmi3CallbackFunctions callbacks = {
+        .allocateMemory     = cb_allocateMemory,
+        .freeMemory         = cb_freeMemory,
+        .logMessage         = cb_logMessage,
+        .intermediateUpdate = cb_intermediateUpdate,
+        .lockPreemption     = NULL,
+        .unlockPreemption   = NULL
+    };
     
     //////////////////////////
     // Initialization sub-phase
@@ -84,11 +82,12 @@ int main(int argc, char* argv[]) {
     callbacks.instanceEnvironment = &instanceEnvironment;
     
     //set Co-Simulation mode
-    fmi3CoSimulationConfiguration csConfig;
-    csConfig.intermediateVariableGetRequired         = fmi3False;
-    csConfig.intermediateInternalVariableGetRequired = fmi3False;
-    csConfig.intermediateVariableSetRequired         = fmi3False;
-    csConfig.coSimulationMode = fmi3ModeHybridCoSimulation;
+    fmi3CoSimulationConfiguration csConfig = {
+        .intermediateVariableGetRequired         = fmi3False,
+        .intermediateInternalVariableGetRequired = fmi3False,
+        .intermediateVariableSetRequired         = fmi3False,
+        .coSimulationMode                        = fmi3ModeHybridCoSimulation
+    };
     
     // Instantiate slave
     fmi3Instance s = fmi3Instantiate("instance", fmi3CoSimulation, MODEL_GUID, "", &callbacks, fmi3False, fmi3False, &csConfig);
@@ -99,12 +98,6 @@ int main(int argc, char* argv[]) {
     }
     
     instanceEnvironment.instance = s;
-    
-    // Start and stop time
-    fmi3Float64 startTime = 0;
-    fmi3Float64 stopTime = 3;
-    // Communication constant step size
-    fmi3Float64 h = 0.01;
     
     // Set all variable start values (of "ScalarVariable / <type> / start")
     // fmi3SetReal/Integer/Boolean/String(s, ...);

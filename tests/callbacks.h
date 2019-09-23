@@ -34,12 +34,4 @@ static void cb_freeMemory(fmi3InstanceEnvironment instanceEnvironment, void* obj
     free(obj);
 }
 
-static void cb_lockPreemption() {
-    // do nothing
-}
-
-static void cb_unlockPreemption() {
-    // do nothing
-}
-
 #endif /* callbacks_h */

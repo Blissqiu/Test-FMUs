@@ -83,6 +83,8 @@ ModelInstance *createModelInstance(
         
         comp->logEvents = loggingOn;
         comp->logErrors = true; // always log errors
+        
+        comp->returnEarly = false;
     }
 
 	if (!comp || !comp->modelData || !comp->instanceName) {
@@ -500,7 +502,8 @@ Status doStep(ModelInstance *comp, double t, double tNext, int* earlyReturn) {
             // call intermediate update callback
             comp->intermediateUpdate((fmi3InstanceEnvironment)comp->componentEnvironment, &updateInfo);
             
-            if (comp->earlyReturnTime == comp->time) {
+            // TODO: ignore return time
+            if (comp->returnEarly) {
                 *earlyReturn = 1;
                 return OK;
             }

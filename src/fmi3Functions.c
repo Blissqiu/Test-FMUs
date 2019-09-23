@@ -199,7 +199,6 @@ fmi3Status fmi3SetupExperiment(fmi3Instance instance, fmi3Boolean toleranceDefin
         return fmi3Error;
 
     comp->time = startTime;
-    comp->earlyReturnTime = startTime;
 
     return fmi3OK;
 }
@@ -881,7 +880,7 @@ fmi3Status fmi3DoEarlyReturn(fmi3Instance instance, fmi3Float64 earlyReturnTime)
 
     ModelInstance *comp = (ModelInstance *)instance;
     
-    comp->earlyReturnTime = earlyReturnTime;
+    comp->returnEarly = true;
     
     return fmi3OK;
 }

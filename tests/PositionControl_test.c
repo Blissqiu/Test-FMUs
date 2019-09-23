@@ -28,7 +28,7 @@ static const fmi3ValueReference vrOutputs[N_OUTPUTS] = { vr_upi };
 static fmi3UInt16 outputs[N_OUTPUTS] = { 0 };
 
 // Callback
-fmi3Status intermediateUpdate(fmi3InstanceEnvironment instanceEnvironment, fmi3IntermediateUpdateInfo* intermediateUpdateInfo) {
+fmi3Status cb_intermediateUpdate(fmi3InstanceEnvironment instanceEnvironment, fmi3IntermediateUpdateInfo* intermediateUpdateInfo) {
     // save intermediateUpdateInfo for later
     updateInfo = *intermediateUpdateInfo;
     return fmi3OK;
@@ -41,8 +41,8 @@ static const fmi3UInt16* calculateInputs() {
 }
 
 static const fmi3Boolean* calculateClocks() {
-    clocks_active[0] = clockTick % 2 == 0;
-    clocks_active[1] = clockTick % 5 == 0;
+    clocks_active[0] = clockTick % 2 == 0; // tick every 2nd step
+    clocks_active[1] = clockTick % 5 == 0; // tick evary 5th step
     return clocks_active;
 }
 
@@ -54,12 +54,16 @@ int main(int argc, char* argv[]) {
     
     fmi3Status status = fmi3OK;
     
-    fmi3CallbackFunctions callbacks = { NULL };
-
-    callbacks.allocateMemory = cb_allocateMemory;
-    callbacks.freeMemory     = cb_freeMemory;
-    callbacks.logMessage     = cb_logMessage;
-
+    const fmi3CallbackFunctions callbacks = {
+        .instanceEnvironment = NULL,
+        .logMessage          = cb_logMessage,
+        .allocateMemory      = cb_allocateMemory,
+        .freeMemory          = cb_freeMemory,
+        .intermediateUpdate  = cb_intermediateUpdate,
+        .lockPreemption      = NULL,
+        .unlockPreemption    = NULL
+    };
+    
     printf("Running Clocked Co-Simulation example... ");
 
     //////////////////////////
@@ -68,15 +72,13 @@ int main(int argc, char* argv[]) {
     // Set callback functions,
     fmi3EventInfo s_eventInfo;
 
-    // Signal that early return is supported by master
-    callbacks.intermediateUpdate = intermediateUpdate;
-
     //set Co-Simulation mode
-    fmi3CoSimulationConfiguration csConfig;
-    csConfig.intermediateVariableGetRequired         = fmi3False;
-    csConfig.intermediateInternalVariableGetRequired = fmi3False;
-    csConfig.intermediateVariableSetRequired         = fmi3False;
-    csConfig.coSimulationMode                        = fmi3ModeHybridCoSimulation;
+    const fmi3CoSimulationConfiguration csConfig = {
+        .intermediateVariableGetRequired         = fmi3False,
+        .intermediateInternalVariableGetRequired = fmi3False,
+        .intermediateVariableSetRequired         = fmi3False,
+        .coSimulationMode                        = fmi3ModeHybridCoSimulation
+    };
 
     // Instantiate slave
     const fmi3Instance s = fmi3Instantiate("instance", fmi3CoSimulation, MODEL_GUID, "", &callbacks, fmi3False, fmi3True, &csConfig);
