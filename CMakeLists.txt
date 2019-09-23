@@ -249,3 +249,20 @@ target_compile_definitions(PositionControl_test PRIVATE
   FMI_VERSION=3
   # DISABLE_PREFIX
 )
+
+add_executable (BouncingBall_test
+  include/fmi3Functions.h
+  include/fmi3FunctionTypes.h
+  include/fmi3PlatformTypes.h
+  tests/util.h
+  BouncingBall/config.h
+  BouncingBall/model.c
+  src/fmi3Functions.c
+  src/slave.c
+  tests/BouncingBall_test.c
+)
+target_include_directories(BouncingBall_test PRIVATE include BouncingBall)
+target_compile_definitions(BouncingBall_test PRIVATE
+  FMI_VERSION=3
+  # DISABLE_PREFIX
+)

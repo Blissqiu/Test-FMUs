@@ -166,12 +166,14 @@ fmi3Instance fmi3Instantiate(fmi3String        instanceName,
 		(loggerType)functions->logMessage,
 		(allocateMemoryType)functions->allocateMemory,
 		(freeMemoryType)functions->freeMemory,
+        (intermediateUpdateType)functions->intermediateUpdate,
 		functions->instanceEnvironment,
 		instanceName,
 		fmuInstantiationToken,
 		fmuResourceLocation,
 		loggingOn,
-		fmuType
+		fmuType,
+        fmuCoSimulationConfiguration->coSimulationMode == fmi3ModeHybridCoSimulation
 	);
 }
 
@@ -197,6 +199,7 @@ fmi3Status fmi3SetupExperiment(fmi3Instance instance, fmi3Boolean toleranceDefin
         return fmi3Error;
 
     comp->time = startTime;
+    comp->earlyReturnTime = startTime;
 
     return fmi3OK;
 }
@@ -210,7 +213,9 @@ fmi3Status fmi3EnterInitializationMode(fmi3Instance instance) {
 }
 
 fmi3Status fmi3ExitInitializationMode(fmi3Instance instance) {
+    
     ModelInstance *comp = (ModelInstance *)instance;
+    
     if (invalidState(comp, "fmi3ExitInitializationMode", MASK_fmi3ExitInitializationMode))
         return fmi3Error;
 
@@ -227,6 +232,11 @@ fmi3Status fmi3ExitInitializationMode(fmi3Instance instance) {
     } else {
         comp->state = modelStepComplete;
     }
+    
+#if NUMBER_OF_EVENT_INDICATORS > 0
+    // initialize event indicators
+    getEventIndicators(comp, comp->prez, NUMBER_OF_EVENT_INDICATORS);
+#endif
 
     return fmi3OK;
 }
@@ -855,8 +865,8 @@ fmi3Status fmi3DoStep(fmi3Instance instance,
         comp->state = modelError;
         return fmi3Error;
     }
-
-    return doStep(comp, currentCommunicationPoint, currentCommunicationPoint + communicationStepSize);
+    
+    return doStep(comp, currentCommunicationPoint, currentCommunicationPoint + communicationStepSize, earlyReturn);
 }
 
 fmi3Status fmi3ActivateModelPartition(fmi3Instance instance,
@@ -866,7 +876,14 @@ fmi3Status fmi3ActivateModelPartition(fmi3Instance instance,
 }
 
 fmi3Status fmi3DoEarlyReturn(fmi3Instance instance, fmi3Float64 earlyReturnTime) {
-    NOT_IMPLEMENTED
+    
+    if (!instance) return fmi3Error;
+
+    ModelInstance *comp = (ModelInstance *)instance;
+    
+    comp->earlyReturnTime = earlyReturnTime;
+    
+    return fmi3OK;
 }
 
 fmi3Status fmi3GetDoStepDiscardedStatus(fmi3Instance instance, fmi3Boolean* terminate, fmi3Float64* lastSuccessfulTime) {

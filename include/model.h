@@ -13,6 +13,10 @@
 
 #include "config.h"
 
+//#if FMI_VERSION == 3
+//#include "fmi3Functions.h"
+//#endif
+
 #if FMI_VERSION == 1
 
 #define not_modelError (modelInstantiated|modelInitialized|modelTerminated)
@@ -72,6 +76,9 @@ typedef void* (*allocateMemoryType)(void *componentEnvironment, size_t nobj, siz
 typedef void  (*freeMemoryType)    (void *componentEnvironment, void *obj);
 #endif
 
+typedef Status (*intermediateUpdateType) (void *componentEnvironment, void *intermediateUpdateInfo);
+                                                      
+
 typedef struct {
     
     double time;
@@ -83,6 +90,7 @@ typedef struct {
 	loggerType logger;
 	allocateMemoryType allocateMemory;
 	freeMemoryType freeMemory;
+    intermediateUpdateType intermediateUpdate;
 
     bool logEvents;
     bool logErrors;
@@ -107,18 +115,23 @@ typedef struct {
 	double *z;
 	double *prez;
     
+    // hybrid co-simulation
+    double earlyReturnTime;
+    
 } ModelInstance;
 
 ModelInstance *createModelInstance(
 	loggerType logger,
 	allocateMemoryType allocateMemory,
 	freeMemoryType freeMemory,
+    intermediateUpdateType intermediateUpdate,
 	void *componentEnvironment,
 	const char *instanceName,
 	const char *GUID,
 	const char *resourceLocation,
 	bool loggingOn,
-	InterfaceType interfaceType);
+    InterfaceType interfaceType,
+    bool returnEarly);
 void freeModelInstance(ModelInstance *comp);
 
 void setStartValues(ModelInstance *comp);

@@ -7,7 +7,12 @@
 
   <ModelExchange modelIdentifier="BouncingBall"/>
 
-  <CoSimulation modelIdentifier="BouncingBall" canHandleVariableCommunicationStepSize="true"/>
+  <CoSimulation modelIdentifier="BouncingBall"
+    canHandleVariableCommunicationStepSize="true"
+    providesIntermediateVariableAccess="true"
+    canReturnEarlyAfterIntermediateUpdate="true"
+    providesHybridCoSimulation="true"
+  />
 
   <BuildConfiguration modelIdentifier="BouncingBall">
     <SourceFileSet language="C99">
