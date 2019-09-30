@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
+#define _USE_MATH_DEFINES
 #include <math.h>
 #include <assert.h>
 #include "fmi3Functions.h"
