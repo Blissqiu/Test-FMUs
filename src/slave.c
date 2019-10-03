@@ -396,6 +396,15 @@ Status activateClock(ModelInstance* comp, ValueReference vr) {
 }
 #endif
 
+#ifndef GET_CLOCK
+Status getClock(ModelInstance* comp, ValueReference vr, int* value) {
+	UNUSED(comp)
+	UNUSED(vr)
+	UNUSED(value)
+	return Error;
+}
+#endif
+
 #if NUMBER_OF_STATES < 1
 void getContinuousStates(ModelInstance *comp, double x[], size_t nx) {
 	UNUSED(comp)
@@ -428,7 +437,7 @@ Status getPartialDerivative(ModelInstance *comp, ValueReference unknown, ValueRe
 
 Status doStep(ModelInstance *comp, double t, double tNext, int* earlyReturn) {
 
-	UNUSED(t)
+	UNUSED(t)  // TODO: check t == comp->time ?
 
     bool stateEvent, timeEvent;
     
@@ -473,7 +482,7 @@ Status doStep(ModelInstance *comp, double t, double tNext, int* earlyReturn) {
 #endif
         
         // check for time event
-        timeEvent = comp->nextEventTimeDefined && comp->time >= comp->nextEventTime;
+        timeEvent = comp->nextEventTimeDefined && (comp->time + FIXED_SOLVER_STEP * 1e-2) >= comp->nextEventTime;
         
         // log events
         if (timeEvent) logEvent(comp, "Time event detected at t=%g s.", comp->time);
@@ -482,22 +491,26 @@ Status doStep(ModelInstance *comp, double t, double tNext, int* earlyReturn) {
         if (stateEvent || timeEvent) {
             
             eventUpdate(comp);
+
+			comp->returnEarly = timeEvent;
             
-            // update previous event indicators
+#if NUMBER_OF_EVENT_INDICATORS > 0
+			// update previous event indicators
             getEventIndicators(comp, comp->prez, NUMBER_OF_EVENT_INDICATORS);
+#endif
 
 #if FMI_VERSION == 3
             if (comp->intermediateUpdate) { // Hybrid Co-Simulation
                 
                 fmi3IntermediateUpdateInfo updateInfo = { 0 };
                 
-                updateInfo.intermediateUpdateTime = comp->time;
-                updateInfo.eventOccurred = fmi3True;
-                updateInfo.clocksTicked = fmi3False;
+                updateInfo.intermediateUpdateTime         = comp->time;
+                updateInfo.eventOccurred                  = fmi3True;
+                updateInfo.clocksTicked                   = comp->clocksTicked;
                 updateInfo.intermediateVariableSetAllowed = fmi3False;
                 updateInfo.intermediateVariableGetAllowed = fmi3False;
-                updateInfo.intermediateStepFinished = fmi3False;
-                updateInfo.canReturnEarly = fmi3True;
+                updateInfo.intermediateStepFinished       = fmi3False;
+                updateInfo.canReturnEarly                 = fmi3True;
                 
                 // call intermediate update callback
                 comp->intermediateUpdate((fmi3InstanceEnvironment)comp->componentEnvironment, &updateInfo);

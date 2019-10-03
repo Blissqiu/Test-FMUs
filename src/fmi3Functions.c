@@ -642,9 +642,18 @@ fmi3Status fmi3SetClock(fmi3Instance instance,
 }
 
 fmi3Status fmi3GetClock(fmi3Instance instance,
-                            const fmi3ValueReference valueReferences[], size_t nValueReferences,
+                        const fmi3ValueReference valueReferences[], size_t nValueReferences,
                         fmi3Boolean value[]) {
-    NOT_IMPLEMENTED
+
+	Status status = OK;
+
+	for (size_t i = 0; i < nValueReferences; i++) {
+		Status s = getClock(instance, valueReferences[i], &value[i]);
+		status = max(status, s);
+		if (status > Warning) return status;
+	}
+
+	return status;
 }
 
 fmi3Status fmi3GetIntervalDecimal(fmi3Instance instance,

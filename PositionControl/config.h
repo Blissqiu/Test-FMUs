@@ -17,6 +17,8 @@
 #define SET_UINT16
 #define EVENT_UPDATE
 #define ACTIVATE_CLOCK
+#define GET_CLOCK
+
 
 #define FIXED_SOLVER_STEP 1
 
@@ -25,7 +27,14 @@ typedef enum {
     vr_position,
     vr_upi,
     vr_timing_event,
-    vr_data_received_event
+    vr_data_received_event,
+	vr_c1,
+	vr_c2,
+	vr_c3,
+	vr_c4,
+	vr_c1Ticks,
+	vr_c2Ticks,
+	vr_totalTicks,
 } ValueReference;
 
 typedef struct {
@@ -34,6 +43,14 @@ typedef struct {
     uint16_t position;
     double linearPosition;
     uint16_t Upi;
+
+	uint16_t ticks;
+	int c1;
+	int c2;
+
+	int c1Ticks;
+	int c2Ticks;
+	int totalTicks;
 
 } ModelData;
 

@@ -1,11 +1,39 @@
 #include "config.h"
 #include "model.h"
+#include <math.h>
+#include <stdlib.h>
+
+/*
+
+c_1: triggered, periodic
+c_2: triggered, aperiodic
+c_3: inferred, periodic
+c_4: inferred, aperiodic
+
+c_1 - - - - -
+c_2 --  --  --
+c_3 +   +   +
+c_4 ++      ++
+t   0123456789
+
+c_1 = t % 2 == 0
+c_2 = t % 4 == 0 || (t - 1) % 4 == 0
+
+c_3 = t % 4 == 0
+c_4 = t % 8 == 0 || (t - 1) % 8 == 0
+
+*/
 
 
 void setStartValues(ModelInstance *comp) {
-    M(reference) = 32767;
-    M(position)  = 32767;
-    M(Upi)       = 0;
+    M(reference)  = 32767;
+    M(position)   = 32767;
+	M(Upi)        = 0;
+	M(c1)         = 0;
+	M(c2)         = 0;
+	M(c1Ticks)    = 0;
+	M(c2Ticks)    = 0;
+	M(totalTicks) = 0;
 }
 
 void calculateValues(ModelInstance *comp) {
@@ -98,12 +126,63 @@ Status setUInt16(ModelInstance* comp, ValueReference vr, const uint16_t *value, 
 }
 
 void eventUpdate(ModelInstance *comp) {
-    comp->valuesOfContinuousStatesChanged   = false;
-    comp->nominalsOfContinuousStatesChanged = false;
-    comp->terminateSimulation               = false;
-    comp->nextEventTimeDefined              = false;
+
+	// update event time
+	double c1_      = 2 * (comp->time / 2 + 1);
+	double c2_even_ = 4 * (comp->time / 4 + 1);
+	double c2_odd_  = 4 * (comp->time / 4 + 1) + 1;
+
+	double nextEventTime = min(c1_, c2_even_);
+	nextEventTime = min(nextEventTime, c2_odd_);
+
+	// TODO: lockPreemption()
+
+	// set triggered clocks
+	M(c1) = fmod(comp->time, 2) == 0;
+	M(c2) = fmod(comp->time, 4) == 0 || fmod(comp->time - 1, 4) == 0;
+
+	// update the counters
+	if (M(c1)) {
+		M(c1Ticks)++;
+		M(totalTicks)++;
+	}
+
+	if (M(c2)) {
+		M(c2Ticks)++;
+		M(totalTicks)++;
+	}
+
+	// TODO: unlockPreemption()
+
+	comp->valuesOfContinuousStatesChanged   = false;
+	comp->nominalsOfContinuousStatesChanged = false;
+	comp->terminateSimulation               = false;
+	comp->nextEventTime                     = nextEventTime;
+	comp->nextEventTimeDefined              = true;
+	comp->clocksTicked                      = M(c1) || M(c2);
 }
 
 Status activateClock(ModelInstance* comp, ValueReference vr) {
     return OK;
+}
+
+Status getClock(ModelInstance* comp, ValueReference vr, int* value) {
+
+	switch (vr) {
+	case vr_c1:
+		*value = M(c1);
+		return OK;
+	case vr_c2:
+		*value = M(c2);
+		return OK;
+	case vr_c3:
+		*value = M(c3);
+		return OK;
+	case vr_c4:
+		*value = M(c4);
+		return OK;
+	default:
+		return Error;
+	}
+
 }

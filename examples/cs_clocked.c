@@ -10,7 +10,8 @@
 
 #define CHECK_STATUS(S) status = S; if (status != fmi3OK) goto out;
 
-#define N_CLOCKS  2
+#define N_INFERRED_CLOCKS  2
+#define N_TRIGGERED_CLOCKS 2
 #define N_INPUTS  2
 #define N_OUTPUTS 1
 
@@ -18,15 +19,27 @@
 // Define callback
 
 // Global variables
-static fmi3IntermediateUpdateInfo updateInfo;
-static const fmi3ValueReference vr_clocks[N_CLOCKS] = { vr_timing_event, vr_data_received_event };
-static fmi3Boolean clocks_active[N_CLOCKS] = { fmi3False };
-static int clockTick = 0;
-static fmi3Float64 time = 0;
-static const fmi3ValueReference vrInputs[N_INPUTS] = { vr_reference, vr_position };
-static fmi3UInt16 inputs[N_INPUTS] = { 0 };
-static const fmi3ValueReference vrOutputs[N_OUTPUTS] = { vr_upi };
-static fmi3UInt16 outputs[N_OUTPUTS] = { 0 };
+fmi3IntermediateUpdateInfo updateInfo;
+const fmi3ValueReference vr_clocks[N_INFERRED_CLOCKS] = { vr_timing_event, vr_data_received_event };
+fmi3Clock inferredClocks[N_INFERRED_CLOCKS] = { fmi3ClockInactive };
+int clockTick = 0;
+fmi3Float64 time = 0;
+const fmi3ValueReference vrInputs[N_INPUTS] = { vr_reference, vr_position };
+fmi3UInt16 inputs[N_INPUTS] = { 0 };
+const fmi3ValueReference vrOutputs[N_OUTPUTS] = { vr_upi };
+fmi3UInt16 outputs[N_OUTPUTS] = { 0 };
+const fmi3ValueReference triggeredClockVRs[N_TRIGGERED_CLOCKS] = { vr_c1, vr_c2 };
+fmi3Clock triggeredClocks[N_TRIGGERED_CLOCKS] = { fmi3ClockInactive };
+
+FILE *outputFile;
+
+fmi3Status recordVariables(fmi3Instance s) {
+	//fmi3ValueReference clockVRs[4] = { vr_c1, vr_c2, vr_c3, vr_c4 };
+	//fmi3Clock clocks[4] = { fmi3ClockInactive };
+	fmi3Status status = fmi3GetClock(s, triggeredClockVRs, N_TRIGGERED_CLOCKS, triggeredClocks);
+	fprintf(outputFile, "%g,%d,%d,%d,%d\n", time, triggeredClocks[0], triggeredClocks[1], inferredClocks[0], inferredClocks[1]);
+	return status;
+}
 
 // Callback
 fmi3Status cb_intermediateUpdate(fmi3InstanceEnvironment instanceEnvironment, fmi3IntermediateUpdateInfo* intermediateUpdateInfo) {
@@ -41,15 +54,24 @@ static const fmi3UInt16* calculateInputs() {
     return inputs;
 }
 
-static const fmi3Boolean* calculateClocks() {
-    clocks_active[0] = clockTick % 2 == 0; // tick every 2nd step
-    clocks_active[1] = clockTick % 5 == 0; // tick evary 5th step
-    return clocks_active;
+//static const fmi3Boolean* calculateClocks() {
+//    inferredClocks[0] = clockTick % 2 == 0; // tick every 2nd step
+//    inferredClocks[1] = clockTick % 5 == 0; // tick evary 5th step
+//    return inferredClocks;
+//}
+
+static bool anyInferredClockActive() {
+    inferredClocks[0] = clockTick % 2 == 0; // tick every 2nd step
+    inferredClocks[1] = clockTick % 5 == 0; // tick evary 5th step
+    return inferredClocks[0] || inferredClocks[1];
 }
 
-static bool anyClockActive() {
-    return clocks_active[0] || clocks_active[1];
-}
+//static bool anyTriggeredClockActive(fmi3Instance s) {
+//	const fmi3ValueReference triggeredClockVRs[N_TRIGGERED_CLOCKS] = { vr_c1, vr_c2 };
+//	fmi3Clock triggeredClocks[N_TRIGGERED_CLOCKS] = { fmi3ClockInactive };
+//	fmi3GetClock(s, triggeredClockVRs, N_TRIGGERED_CLOCKS, triggeredClocks);
+//	return triggeredClocks[0] || triggeredClocks[1];
+//}
 
 int main(int argc, char* argv[]) {
     
@@ -66,6 +88,16 @@ int main(int argc, char* argv[]) {
     };
     
     printf("Running Clocked Co-Simulation example... ");
+
+	outputFile = fopen("clocks_out.csv", "w");
+
+	if (!outputFile) {
+		puts("Failed to open output file.");
+		return EXIT_FAILURE;
+	}
+
+	// write the header of the CSV
+	fputs("time,c1,c2,c3,c4\n", outputFile);
 
     //////////////////////////
     // Initialization sub-phase
@@ -90,9 +122,9 @@ int main(int argc, char* argv[]) {
     }
 
     // Start and stop time
-    const fmi3Float64 stopTime  = 1000e-3; // 1000 ms
+	const fmi3Float64 stopTime = 10; // 1000e-3; // 1000 ms
     // Communication constant step size
-    const fmi3Float64 stepSize = 500e-6; // 500 us
+	const fmi3Float64 stepSize = 4; // 500e-6; //  500 us
 
     // set all variable start values
 
@@ -105,15 +137,15 @@ int main(int argc, char* argv[]) {
 
     //////////////////////////
     // Simulation sub-phase
-    fmi3Float64 step = stepSize; // Starting non-zero step size
+    //fmi3Float64 step = stepSize; // Starting non-zero step size
     
     bool eventMode = true;
 
     while (time < stopTime) {
         
-        calculateClocks();
+        //calculateClocks();
 
-        if (anyClockActive()) {
+        if (anyInferredClockActive()) {
             
             /* set possible active inferred clocks to true or to false*/
             
@@ -122,48 +154,60 @@ int main(int argc, char* argv[]) {
                 eventMode = true;
             };
             
-            CHECK_STATUS(fmi3SetClock(s, vr_clocks, N_CLOCKS, clocks_active, NULL));
+            CHECK_STATUS(fmi3SetClock(s, vr_clocks, N_INFERRED_CLOCKS, inferredClocks, NULL));
             
             // fmi3SetInterval(s, ...); /* Only needed if interval changes */
         };
 
         if (eventMode) {
-            CHECK_STATUS(fmi3NewDiscreteStates(s, &s_eventInfo))
-        } else {
+
+			do {
+				CHECK_STATUS(fmi3NewDiscreteStates(s, &s_eventInfo))
+			} while (s_eventInfo.newDiscreteStatesNeeded);
+
+			CHECK_STATUS(fmi3EnterContinuousTimeMode(s))
+
+			eventMode = false;
+        }
+		
+		{
             // Continuous mode (default mode)
-            fmi3Float64 tend = time + step;
-            fmi3Float64 t = tend * 2;
+            //fmi3Float64 tend = time + step;
+            //fmi3Float64 t = tend * 2;
             fmi3Boolean earlyReturn = fmi3False;
             
-            CHECK_STATUS(fmi3DoStep(s, time, step, fmi3False, &earlyReturn))
+            CHECK_STATUS(fmi3DoStep(s, time, stepSize, fmi3False, &earlyReturn))
 
             if (earlyReturn) {
-                t = updateInfo.intermediateUpdateTime;
+                //t = updateInfo.intermediateUpdateTime;
                 /* rollback FMUs to earliest event time */
                 CHECK_STATUS(fmi3EnterEventMode(s))
                 eventMode = true;
-                time = t;
-            } else{
-                time = tend;
+                time = updateInfo.intermediateUpdateTime;
+            } else {
+                time += stepSize;
             }
         }
 
         if (updateInfo.clocksTicked) {
-            // fmi3GetClock(s, ...);
-            // fmi3GetInterval(s, /*Intervals*/, ...);
+			CHECK_STATUS(fmi3GetClock(s, triggeredClockVRs, N_TRIGGERED_CLOCKS, triggeredClocks))
+			// fmi3GetInterval(s, /*Intervals*/, ...);
+			recordVariables(s);
         };
         
-        if (eventMode && !s_eventInfo.newDiscreteStatesNeeded && !anyClockActive()) {
-            CHECK_STATUS(fmi3EnterContinuousTimeMode(s))
-            eventMode = false;
-            // step = min(/*Intervals*/, s_eventInfo.nextEventTime, ...);
-        };
+        //if (eventMode && !s_eventInfo.newDiscreteStatesNeeded && !anyClockActive()) {
+        //    CHECK_STATUS(fmi3EnterContinuousTimeMode(s))
+        //    eventMode = false;
+        //    // step = min(/*Intervals*/, s_eventInfo.nextEventTime, ...);
+        //};
 
         // Get outputs
-        CHECK_STATUS(fmi3GetUInt16(s, vrOutputs, 1, outputs, 1))
+		CHECK_STATUS(fmi3GetUInt16(s, vrOutputs, 1, outputs, 1))
 
-        // Set inputs
-        CHECK_STATUS(fmi3SetUInt16(s, vrInputs, N_INPUTS, calculateInputs(), N_INPUTS))
+		// Set inputs
+		CHECK_STATUS(fmi3SetUInt16(s, vrInputs, N_INPUTS, calculateInputs(), N_INPUTS))
+
+		clockTick++;
     };
 
     fmi3Status terminateStatus;
