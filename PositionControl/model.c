@@ -132,8 +132,8 @@ void eventUpdate(ModelInstance *comp) {
 	double c2_even_ = 4 * (comp->time / 4 + 1);
 	double c2_odd_  = 4 * (comp->time / 4 + 1) + 1;
 
-	double nextEventTime = min(c1_, c2_even_);
-	nextEventTime = min(nextEventTime, c2_odd_);
+	double nextEventTime = fmin(c1_, c2_even_);
+	nextEventTime = fmin(nextEventTime, c2_odd_);
 
 	// TODO: lockPreemption()
 

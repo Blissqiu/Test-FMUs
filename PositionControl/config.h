@@ -45,8 +45,10 @@ typedef struct {
     uint16_t Upi;
 
 	uint16_t ticks;
-	int c1;
-	int c2;
+    int c1;
+    int c2;
+    int c3;
+    int c4;
 
 	int c1Ticks;
 	int c2Ticks;

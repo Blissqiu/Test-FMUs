@@ -150,7 +150,8 @@ int main(int argc, char* argv[]) {
             /* set possible active inferred clocks to true or to false*/
             
             if(!eventMode) {
-                CHECK_STATUS(fmi3EnterEventMode(s))
+                // TODO: pass reasons
+                CHECK_STATUS(fmi3EnterEventMode(s, fmi3False, fmi3False, NULL, 0, fmi3False));
                 eventMode = true;
             };
             
@@ -181,7 +182,8 @@ int main(int argc, char* argv[]) {
             if (earlyReturn) {
                 //t = updateInfo.intermediateUpdateTime;
                 /* rollback FMUs to earliest event time */
-                CHECK_STATUS(fmi3EnterEventMode(s))
+                // TODO: pass reasons
+                CHECK_STATUS(fmi3EnterEventMode(s, fmi3False, fmi3False, NULL, 0, fmi3False));
                 eventMode = true;
                 time = updateInfo.intermediateUpdateTime;
             } else {

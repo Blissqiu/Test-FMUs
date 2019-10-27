@@ -127,7 +127,8 @@ int main(int argc, char* argv[]) {
             switch (status) {
                 case fmi3OK:
                     if (earlyReturn) {
-                        CHECK_STATUS(fmi3EnterEventMode(s));
+                        // TODO: pass reasons
+                        CHECK_STATUS(fmi3EnterEventMode(s, fmi3False, fmi3False, NULL, 0, fmi3False));
                         step = 0;
                         tc = instanceEnvironment.intermediateUpdateTime;
                     } else {
