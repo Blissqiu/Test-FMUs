@@ -611,7 +611,6 @@ fmi3Status fmi3GetDirectionalDerivative(fmi3Instance instance, const fmi3ValueRe
             if (status > Warning) return status;
             deltaUnknowns[i] += partialDerivative * deltaKnowns[j];
         }
-        deltaUnknowns[i] *= deltaUnknowns[i];
     }
     
     return fmi3OK;
