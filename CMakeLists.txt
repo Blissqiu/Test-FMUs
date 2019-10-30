@@ -20,7 +20,10 @@ endif ()
 if (MSVC)
   string(REPLACE "/MD"  "/MT"  CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
   string(REPLACE "/MDd" "/MTd" CMAKE_C_FLAGS_DEBUG   "${CMAKE_C_FLAGS_DEBUG}")
+  add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 endif ()
+
+add_compile_definitions(FMI_VERSION=${FMI_VERSION})
 
 if (${FMI_VERSION} GREATER 2)
 
@@ -117,9 +120,7 @@ add_library(${TARGET_NAME} SHARED
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist)
 
 target_compile_definitions(${TARGET_NAME} PRIVATE
-  _CRT_SECURE_NO_WARNINGS
   DISABLE_PREFIX
-  FMI_VERSION=${FMI_VERSION}
 )
 
 if (${FMI_VERSION} EQUAL 1 AND "${FMI_TYPE}" STREQUAL CS)
