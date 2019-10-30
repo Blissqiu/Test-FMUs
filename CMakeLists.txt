@@ -287,9 +287,15 @@ if (${FMI_VERSION} EQUAL 3)
   target_compile_definitions(slave2 PRIVATE FMI_VERSION=3 FMI3_FUNCTION_PREFIX=s2_ _CRT_SECURE_NO_WARNINGS)
   target_include_directories(slave2 PRIVATE include VanDerPol)
 
-  add_executable (co_simulation examples/co_simulation.c)
+  add_executable(co_simulation examples/co_simulation.c)
   set_target_properties (co_simulation PROPERTIES FOLDER examples)
   target_include_directories(co_simulation PRIVATE include)
   target_link_libraries(co_simulation slave1 slave2)
+
+  # jacobian
+  add_executable(jacobian src/fmi3Functions.c VanDerPol/model.c src/slave.c examples/jacobian.c)
+  set_target_properties (jacobian PROPERTIES FOLDER examples)
+  target_include_directories(jacobian PRIVATE include VanDerPol)
+  target_compile_definitions(jacobian PRIVATE FMI_VERSION=3 DISABLE_PREFIX _CRT_SECURE_NO_WARNINGS)
 
 endif()
