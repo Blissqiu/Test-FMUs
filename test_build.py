@@ -171,7 +171,11 @@ class BuildTest(unittest.TestCase):
         # run examples
         for example in ['co_simulation', 'cs_clocked', 'cs_early_return', 'jacobian']:
             print("Running %s example..." % example)
-            subprocess.check_call(os.path.join(build_dir, example + ('.exe' if os.name == 'nt' else '')))
+            if os.name == 'nt':
+                filename = os.path.join(build_dir, 'Release', example + '.exe')
+            else:
+                filename = os.path.join(build_dir, example)
+            subprocess.check_call(filename)
 
         if fmi3_available:
             self.validate(build_dir, models=['BouncingBall', 'Dahlquist', 'Feedthrough', 'Resource', 'Stair', 'VanDerPol'])
