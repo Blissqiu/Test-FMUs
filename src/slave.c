@@ -534,6 +534,9 @@ Status doStep(ModelInstance *comp, double t, double tNext, int* earlyReturn) {
 		comp->time += FIXED_SOLVER_STEP;
     }
 
-    *earlyReturn = 0;
+    if (earlyReturn) {
+        *earlyReturn = 0;
+    }
+    
     return OK;
 }
