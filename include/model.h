@@ -13,10 +13,6 @@
 
 #include "config.h"
 
-//#if FMI_VERSION == 3
-//#include "fmi3Functions.h"
-//#endif
-
 #if FMI_VERSION == 1
 
 #define not_modelError (modelInstantiated|modelInitialized|modelTerminated)
