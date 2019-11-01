@@ -29,15 +29,13 @@ fmi3Float64 time = 0;
 const fmi3ValueReference vrOutputs[N_OUTPUTS] = { vr_totalTicks };
 fmi3Int32 outputs[N_OUTPUTS] = { 0 };
 const fmi3ValueReference outputClockVRs[N_OUTPUT_CLOCKS] = { vr_c3, vr_c4 };
-fmi3Clock triggeredClocks[N_OUTPUT_CLOCKS] = { fmi3ClockInactive };
+fmi3Clock outputClocks[N_OUTPUT_CLOCKS] = { fmi3ClockInactive };
 
 FILE *outputFile;
 
 fmi3Status recordVariables(fmi3Instance s) {
-	//fmi3ValueReference clockVRs[4] = { vr_c1, vr_c2, vr_c3, vr_c4 };
-	//fmi3Clock clocks[4] = { fmi3ClockInactive };
-	fmi3Status status = fmi3GetClock(s, outputClockVRs, N_OUTPUT_CLOCKS, triggeredClocks);
-	fprintf(outputFile, "%g,%d,%d,%d,%d\n", time, triggeredClocks[0], triggeredClocks[1], inputClocks[0], inputClocks[1]);
+	fmi3Status status = fmi3GetClock(s, outputClockVRs, N_OUTPUT_CLOCKS, outputClocks);
+	fprintf(outputFile, "%g,%d,%d,%d,%d\n", time, inputClocks[0], inputClocks[1], outputClocks[0], outputClocks[1]);
 	return status;
 }
 
@@ -61,9 +59,13 @@ fmi3Status cb_intermediateUpdate(fmi3InstanceEnvironment instanceEnvironment, fm
 //}
 
 static bool anyInputClockActive() {
-    inputClocks[0] = clockTick % 2 == 0; // tick every 2nd step
-    inputClocks[1] = clockTick % 5 == 0; // tick evary 5th step
+    inputClocks[0] = clockTick % 4 == 0; // active at 4
+    inputClocks[1] = clockTick % 8 == 0 || (clockTick - 1) % 8 == 0; // active at 8 and 9
     return inputClocks[0] || inputClocks[1];
+}
+
+static fmi3Float64 timeUntilNextEvent() {
+    return 1;
 }
 
 //static bool anyTriggeredClockActive(fmi3Instance s) {
@@ -124,13 +126,13 @@ int main(int argc, char* argv[]) {
     // Start and stop time
 	const fmi3Float64 stopTime = 10; // 1000e-3; // 1000 ms
     // Communication constant step size
-	const fmi3Float64 stepSize = 4; // 500e-6; //  500 us
+	fmi3Float64 stepSize; // 500e-6; //  500 us
 
     // set all variable start values
 
     // Initialize slave
-    CHECK_STATUS(fmi3SetupExperiment(s, fmi3False, 0.0, time, fmi3True, stopTime))
-    CHECK_STATUS(fmi3EnterInitializationMode(s))
+    CHECK_STATUS(fmi3SetupExperiment(s, fmi3False, 0.0, time, fmi3True, stopTime));
+    CHECK_STATUS(fmi3EnterInitializationMode(s));
     // Set the input values at time = startTime
 //    CHECK_STATUS(fmi3SetUInt16(s, vrInputs, N_INPUTS, calculateInputs(), N_INPUTS))
 //    CHECK_STATUS(fmi3ExitInitializationMode(s))
@@ -139,22 +141,26 @@ int main(int argc, char* argv[]) {
     // Simulation sub-phase
     //fmi3Float64 step = stepSize; // Starting non-zero step size
     
+    // update clocks
+    anyInputClockActive();
+    CHECK_STATUS(fmi3GetClock(s, outputClockVRs, N_OUTPUT_CLOCKS, outputClocks));
+    
     bool eventMode = true;
-
+    
     while (time < stopTime) {
+                        
+        stepSize = timeUntilNextEvent();
         
-        //calculateClocks();
-
-        if (anyInputClockActive()) {
+        if (true || anyInputClockActive()) {
             
             /* set possible active inferred clocks to true or to false*/
             
             if(!eventMode) {
-                // TODO: pass reasons
                 CHECK_STATUS(fmi3EnterEventMode(s, fmi3False, fmi3False, NULL, 0, fmi3False));
                 eventMode = true;
             };
             
+            // set input clocks
             CHECK_STATUS(fmi3SetClock(s, vr_clocks, N_INPUT_CLOCKS, inputClocks, NULL));
             
             // fmi3SetInterval(s, ...); /* Only needed if interval changes */
@@ -162,53 +168,43 @@ int main(int argc, char* argv[]) {
 
         if (eventMode) {
 
+            // event update
 			do {
 				CHECK_STATUS(fmi3NewDiscreteStates(s, &s_eventInfo))
 			} while (s_eventInfo.newDiscreteStatesNeeded);
 
-			CHECK_STATUS(fmi3EnterContinuousTimeMode(s))
+            CHECK_STATUS(fmi3EnterStepMode(s));
 
 			eventMode = false;
         }
+        
+        recordVariables(s);
 		
-		{
-            // Continuous mode (default mode)
-            //fmi3Float64 tend = time + step;
-            //fmi3Float64 t = tend * 2;
-            fmi3Boolean earlyReturn = fmi3False;
-            
-            CHECK_STATUS(fmi3DoStep(s, time, stepSize, fmi3False, &earlyReturn))
+        // Continuous mode (default mode)
+        //fmi3Float64 tend = time + step;
+        //fmi3Float64 t = tend * 2;
+        fmi3Boolean earlyReturn = fmi3False;
+        
+        CHECK_STATUS(fmi3DoStep(s, time, stepSize, fmi3False, &earlyReturn));
+                
+//        if (earlyReturn) {
+//            //t = updateInfo.intermediateUpdateTime;
+//            /* rollback FMUs to earliest event time */
+////            CHECK_STATUS(fmi3EnterEventMode(s, fmi3False, fmi3False, NULL, 0, fmi3False));
+////            eventMode = true;
+////                time = updateInfo.intermediateUpdateTime;
+//        } else {
+////                time += stepSize;
+//        }
+                    
+        time += 1;
 
-            if (earlyReturn) {
-                //t = updateInfo.intermediateUpdateTime;
-                /* rollback FMUs to earliest event time */
-                // TODO: pass reasons
-                CHECK_STATUS(fmi3EnterEventMode(s, fmi3False, fmi3False, NULL, 0, fmi3False));
-                eventMode = true;
-                time = updateInfo.intermediateUpdateTime;
-            } else {
-                time += stepSize;
-            }
-        }
+        CHECK_STATUS(fmi3GetClock(s, outputClockVRs, N_OUTPUT_CLOCKS, outputClocks));
 
         if (updateInfo.clocksTicked) {
-			CHECK_STATUS(fmi3GetClock(s, outputClockVRs, N_OUTPUT_CLOCKS, triggeredClocks))
 			// fmi3GetInterval(s, /*Intervals*/, ...);
-			recordVariables(s);
         };
         
-        //if (eventMode && !s_eventInfo.newDiscreteStatesNeeded && !anyClockActive()) {
-        //    CHECK_STATUS(fmi3EnterContinuousTimeMode(s))
-        //    eventMode = false;
-        //    // step = min(/*Intervals*/, s_eventInfo.nextEventTime, ...);
-        //};
-
-        // Get outputs
-		CHECK_STATUS(fmi3GetInt32(s, vrOutputs, 1, outputs, 1))
-
-		// Set inputs
-//		CHECK_STATUS(fmi3SetUInt16(s, vrInputs, N_INPUTS, calculateInputs(), N_INPUTS))
-
 		clockTick++;
     };
 

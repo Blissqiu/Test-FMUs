@@ -846,7 +846,7 @@ fmi3Status fmi3GetNumberOfContinuousStates(fmi3Instance instance, size_t* nx) {
  ****************************************************/
 
 fmi3Status fmi3EnterStepMode(fmi3Instance instance) {
-    NOT_IMPLEMENTED
+    return fmi3OK;
 }
 
 fmi3Status fmi3SetInputDerivatives(fmi3Instance instance,

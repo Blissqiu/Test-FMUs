@@ -492,7 +492,7 @@ Status doStep(ModelInstance *comp, double t, double tNext, int* earlyReturn) {
             
             eventUpdate(comp);
 
-			comp->returnEarly = timeEvent;
+			comp->returnEarly = comp->nextEventTime < t + tNext;
             
 #if NUMBER_OF_EVENT_INDICATORS > 0
 			// update previous event indicators
