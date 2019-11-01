@@ -10,8 +10,8 @@
 
 #define CHECK_STATUS(S) status = S; if (status != fmi3OK) goto out;
 
-#define N_INFERRED_CLOCKS  2
-#define N_TRIGGERED_CLOCKS 2
+#define N_INPUT_CLOCKS  2
+#define N_OUTPUT_CLOCKS 2
 #define N_INPUTS  2
 #define N_OUTPUTS 1
 
@@ -20,24 +20,24 @@
 
 // Global variables
 fmi3IntermediateUpdateInfo updateInfo;
-const fmi3ValueReference vr_clocks[N_INFERRED_CLOCKS] = { vr_timing_event, vr_data_received_event };
-fmi3Clock inferredClocks[N_INFERRED_CLOCKS] = { fmi3ClockInactive };
+const fmi3ValueReference vr_clocks[N_INPUT_CLOCKS] = { vr_c1, vr_c2 };
+fmi3Clock inputClocks[N_INPUT_CLOCKS] = { fmi3ClockInactive };
 int clockTick = 0;
 fmi3Float64 time = 0;
-const fmi3ValueReference vrInputs[N_INPUTS] = { vr_reference, vr_position };
-fmi3UInt16 inputs[N_INPUTS] = { 0 };
-const fmi3ValueReference vrOutputs[N_OUTPUTS] = { vr_upi };
-fmi3UInt16 outputs[N_OUTPUTS] = { 0 };
-const fmi3ValueReference triggeredClockVRs[N_TRIGGERED_CLOCKS] = { vr_c1, vr_c2 };
-fmi3Clock triggeredClocks[N_TRIGGERED_CLOCKS] = { fmi3ClockInactive };
+//const fmi3ValueReference vrInputs[N_INPUTS] = { vr_reference, vr_position };
+//fmi3UInt16 inputs[N_INPUTS] = { 0 };
+const fmi3ValueReference vrOutputs[N_OUTPUTS] = { vr_totalTicks };
+fmi3Int32 outputs[N_OUTPUTS] = { 0 };
+const fmi3ValueReference outputClockVRs[N_OUTPUT_CLOCKS] = { vr_c3, vr_c4 };
+fmi3Clock triggeredClocks[N_OUTPUT_CLOCKS] = { fmi3ClockInactive };
 
 FILE *outputFile;
 
 fmi3Status recordVariables(fmi3Instance s) {
 	//fmi3ValueReference clockVRs[4] = { vr_c1, vr_c2, vr_c3, vr_c4 };
 	//fmi3Clock clocks[4] = { fmi3ClockInactive };
-	fmi3Status status = fmi3GetClock(s, triggeredClockVRs, N_TRIGGERED_CLOCKS, triggeredClocks);
-	fprintf(outputFile, "%g,%d,%d,%d,%d\n", time, triggeredClocks[0], triggeredClocks[1], inferredClocks[0], inferredClocks[1]);
+	fmi3Status status = fmi3GetClock(s, outputClockVRs, N_OUTPUT_CLOCKS, triggeredClocks);
+	fprintf(outputFile, "%g,%d,%d,%d,%d\n", time, triggeredClocks[0], triggeredClocks[1], inputClocks[0], inputClocks[1]);
 	return status;
 }
 
@@ -48,11 +48,11 @@ fmi3Status cb_intermediateUpdate(fmi3InstanceEnvironment instanceEnvironment, fm
     return fmi3OK;
 }
 
-static const fmi3UInt16* calculateInputs() {
-    inputs[0] = UINT16_MAX * sin(4 * M_PI * (time + 10e-3)); // 2 Hz sine with 10 ms phase shift
-    inputs[1] = UINT16_MAX * sin(4 * M_PI * time);           // 2 Hz sine
-    return inputs;
-}
+//static const fmi3UInt16* calculateInputs() {
+//    inputs[0] = UINT16_MAX * sin(4 * M_PI * (time + 10e-3)); // 2 Hz sine with 10 ms phase shift
+//    inputs[1] = UINT16_MAX * sin(4 * M_PI * time);           // 2 Hz sine
+//    return inputs;
+//}
 
 //static const fmi3Boolean* calculateClocks() {
 //    inferredClocks[0] = clockTick % 2 == 0; // tick every 2nd step
@@ -60,10 +60,10 @@ static const fmi3UInt16* calculateInputs() {
 //    return inferredClocks;
 //}
 
-static bool anyInferredClockActive() {
-    inferredClocks[0] = clockTick % 2 == 0; // tick every 2nd step
-    inferredClocks[1] = clockTick % 5 == 0; // tick evary 5th step
-    return inferredClocks[0] || inferredClocks[1];
+static bool anyInputClockActive() {
+    inputClocks[0] = clockTick % 2 == 0; // tick every 2nd step
+    inputClocks[1] = clockTick % 5 == 0; // tick evary 5th step
+    return inputClocks[0] || inputClocks[1];
 }
 
 //static bool anyTriggeredClockActive(fmi3Instance s) {
@@ -132,8 +132,8 @@ int main(int argc, char* argv[]) {
     CHECK_STATUS(fmi3SetupExperiment(s, fmi3False, 0.0, time, fmi3True, stopTime))
     CHECK_STATUS(fmi3EnterInitializationMode(s))
     // Set the input values at time = startTime
-    CHECK_STATUS(fmi3SetUInt16(s, vrInputs, N_INPUTS, calculateInputs(), N_INPUTS))
-    CHECK_STATUS(fmi3ExitInitializationMode(s))
+//    CHECK_STATUS(fmi3SetUInt16(s, vrInputs, N_INPUTS, calculateInputs(), N_INPUTS))
+//    CHECK_STATUS(fmi3ExitInitializationMode(s))
 
     //////////////////////////
     // Simulation sub-phase
@@ -145,7 +145,7 @@ int main(int argc, char* argv[]) {
         
         //calculateClocks();
 
-        if (anyInferredClockActive()) {
+        if (anyInputClockActive()) {
             
             /* set possible active inferred clocks to true or to false*/
             
@@ -155,7 +155,7 @@ int main(int argc, char* argv[]) {
                 eventMode = true;
             };
             
-            CHECK_STATUS(fmi3SetClock(s, vr_clocks, N_INFERRED_CLOCKS, inferredClocks, NULL));
+            CHECK_STATUS(fmi3SetClock(s, vr_clocks, N_INPUT_CLOCKS, inputClocks, NULL));
             
             // fmi3SetInterval(s, ...); /* Only needed if interval changes */
         };
@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
         }
 
         if (updateInfo.clocksTicked) {
-			CHECK_STATUS(fmi3GetClock(s, triggeredClockVRs, N_TRIGGERED_CLOCKS, triggeredClocks))
+			CHECK_STATUS(fmi3GetClock(s, outputClockVRs, N_OUTPUT_CLOCKS, triggeredClocks))
 			// fmi3GetInterval(s, /*Intervals*/, ...);
 			recordVariables(s);
         };
@@ -204,10 +204,10 @@ int main(int argc, char* argv[]) {
         //};
 
         // Get outputs
-		CHECK_STATUS(fmi3GetUInt16(s, vrOutputs, 1, outputs, 1))
+		CHECK_STATUS(fmi3GetInt32(s, vrOutputs, 1, outputs, 1))
 
 		// Set inputs
-		CHECK_STATUS(fmi3SetUInt16(s, vrInputs, N_INPUTS, calculateInputs(), N_INPUTS))
+//		CHECK_STATUS(fmi3SetUInt16(s, vrInputs, N_INPUTS, calculateInputs(), N_INPUTS))
 
 		clockTick++;
     };

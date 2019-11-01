@@ -8,18 +8,22 @@
     <Category name="logStatusError" description="Log error messages"/>
   </LogCategories>
 
-  <DefaultExperiment startTime="0" stopTime="1"/>
+  <DefaultExperiment startTime="0" stopTime="10" stepSize="1"/>
 
   <ModelVariables>
-    <UInt16 name="Reference"          valueReference="0" causality="input" start="32767"/>
-    <UInt16 name="Position"           valueReference="1" causality="input" start="32767"/>
-    <UInt16 name="Upi"                valueReference="2" causality="output"/>
-    <Clock  name="TimingEvent"        valueReference="3" causality="inferred" variability="clock" clockType="communicationPoint" priority="1" periodic="true" strict="true" intervalCounter="1" resolution="1000"/>
-    <Clock  name="DataReceivedEvent"  valueReference="4" causality="inferred" variability="clock" clockType="communicationPoint" priority="2"/>
+    <Clock name="c1" valueReference="0" causality="input"  variability="clock" clockType="synchronousTime" periodic="true"  start="0"/>
+    <Clock name="c2" valueReference="1" causality="input"  variability="clock" clockType="synchronousTime" periodic="false" start="0"/>
+    <Clock name="c3" valueReference="2" causality="output" variability="clock" clockType="synchronousTime" periodic="true"/>
+    <Clock name="c4" valueReference="3" causality="output" variability="clock" clockType="synchronousTime" periodic="false"/>
+    <Int32 name="c1Ticks"    valueReference="5" causality="output"/>
+    <Int32 name="c2Ticks"    valueReference="6" causality="output"/>
+    <Int32 name="totalTicks" valueReference="7" causality="output"/>
   </ModelVariables>
 
   <ModelStructure>
-    <Output valueReference="2"/>
+    <Output valueReference="5"/>
+    <Output valueReference="6"/>
+    <Output valueReference="7"/>
   </ModelStructure>
 
 </fmiModelDescription>
