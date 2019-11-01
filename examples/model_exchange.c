@@ -8,29 +8,12 @@
 #include "fmi3Functions.h"
 #undef FMI3_FUNCTION_PREFIX
 
+#include "util.h"
 #include "config.h"
 
-#ifndef min
-#define min(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
-#endif
-
-#ifndef max
-#define max(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
-#endif
-
-#define CHECK_STATUS(S) status = S; if (status != fmi3OK) goto TERMINATE_MODEL;
-
-void cb_logMessage(fmi3InstanceEnvironment instanceEnvironment, fmi3String instanceName, fmi3Status status, fmi3String category, fmi3String message) {
-    puts(message);
-}
-
-void* cb_allocateMemory(fmi3InstanceEnvironment instanceEnvironment, size_t nobj, size_t size) {
-    return calloc(nobj, size);
-}
-
-void  cb_freeMemory(fmi3InstanceEnvironment instanceEnvironment, void* obj)  {
-    free(obj);
-}
+#define FIXED_STEP 1e-2
+#define STOP_TIME 3
+#define OUTPUT_FILE_HEADER "time,h,v\n"
 
 fmi3Status recordVariables(FILE *outputFile, fmi3Instance s, fmi3Float64 time) {
     const fmi3ValueReference valueReferences[2] = { vr_h, vr_v };
@@ -40,25 +23,34 @@ fmi3Status recordVariables(FILE *outputFile, fmi3Instance s, fmi3Float64 time) {
     return status;
 }
 
+#define CHECK_STATUS(S) status = S; if (status != fmi3OK) goto TERMINATE_MODEL;
+
 int main(int argc, char* argv[]) {
 
     fmi3Status status = fmi3OK;
-    fmi3Float64 h = 0.1, tNext = h, tEnd = 3, time, tStart = 0;
+    const fmi3Float64 fixedStep = FIXED_STEP;
+    fmi3Float64 h = fixedStep;
+    fmi3Float64 tNext = h;
+    const fmi3Float64 tEnd = STOP_TIME;
+    fmi3Float64 time = 0;
+    const fmi3Float64 tStart = 0;
     fmi3Boolean timeEvent, stateEvent, enterEventMode, terminateSimulation = fmi3False, initialEventMode, valuesOfContinuousStatesChanged, nominalsOfContinuousStatesChanged;
     fmi3EventInfo eventInfo;
     fmi3Int32 rootsFound[NUMBER_OF_EVENT_INDICATORS] = { 0 };
 
     fmi3CallbackFunctions callbacks = {
-        .allocateMemory = cb_allocateMemory,
-        .freeMemory     = cb_freeMemory,
-        .logMessage     = cb_logMessage
+        .allocateMemory     = cb_allocateMemory,
+        .freeMemory         = cb_freeMemory,
+        .logMessage         = cb_logMessage,
+        .intermediateUpdate = NULL,
+        .lockPreemption     = NULL,
+        .unlockPreemption   = NULL
     };
     
     fmi3Instance m = NULL;
     fmi3Float64 x[NUMBER_OF_STATES] = { 0 };
     fmi3Float64 x_nominal[NUMBER_OF_STATES] = { 0 };
     fmi3Float64 der_x[NUMBER_OF_STATES] = { 0 };
-    fmi3Float64 fixedStep = 0.01;
     fmi3Float64 z[NUMBER_OF_EVENT_INDICATORS] = { 0 };
     fmi3Float64 previous_z[NUMBER_OF_EVENT_INDICATORS] = { 0 };
     FILE *outputFile = NULL;
@@ -73,7 +65,7 @@ int main(int argc, char* argv[]) {
     }
 
     // write the header of the CSV
-    fputs("time,h,v\n", outputFile);
+    fputs(OUTPUT_FILE_HEADER, outputFile);
     
 // tag::ModelExchange[]
 m = M_fmi3Instantiate("m", fmi3ModelExchange, MODEL_GUID, NULL, &callbacks, fmi3False, fmi3False, NULL);
@@ -152,7 +144,7 @@ while (!terminateSimulation) {
         CHECK_STATUS(M_fmi3EnterContinuousTimeMode(m));
 
         // retrieve solution at simulation (re)start
-        recordVariables(outputFile, m, time);
+        CHECK_STATUS(recordVariables(outputFile, m, time));
 
         if (initialEventMode || valuesOfContinuousStatesChanged) {
             // the model signals a value change of states, retrieve them
@@ -221,14 +213,14 @@ while (!terminateSimulation) {
 
     // get continuous output
     // M_fmi3GetFloat*(m, ...)
-    recordVariables(outputFile, m, time);
+    CHECK_STATUS(recordVariables(outputFile, m, time));
 }
     
 TERMINATE_MODEL:
 
     if (m && status != fmi3Error && status != fmi3Fatal) {
         // retrieve final values and terminate simulation
-        recordVariables(outputFile, m, time);
+        CHECK_STATUS(recordVariables(outputFile, m, time));
         status = max(status, M_fmi3Terminate(m));
     }
     
