@@ -12,18 +12,7 @@
 #include "fmi3Functions.h"
 #undef FMI3_FUNCTION_PREFIX
 
-
-void cb_logMessage(fmi3InstanceEnvironment instanceEnvironment, fmi3String instanceName, fmi3Status status, fmi3String category, fmi3String message) {
-    puts(message);
-}
-
-void* cb_allocateMemory(fmi3InstanceEnvironment instanceEnvironment, size_t nobj, size_t size) {
-    return calloc(nobj, size);
-}
-
-void  cb_freeMemory(fmi3InstanceEnvironment instanceEnvironment, void* obj)  {
-    free(obj);
-}
+#include "util.h"
 
 
 int main(int argc, char* argv[]) {
