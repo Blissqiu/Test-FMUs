@@ -66,13 +66,13 @@ target_include_directories(jacobian PRIVATE include VanDerPol)
 target_compile_definitions(jacobian PRIVATE DISABLE_PREFIX)
 
 # model exchange
-add_library(model STATIC ${EXAMPLE_SOURCES} src/fmi3Functions.c VanDerPol/model.c src/slave.c)
+add_library(model STATIC ${EXAMPLE_SOURCES} src/fmi3Functions.c BouncingBall/model.c src/slave.c)
 set_target_properties(model PROPERTIES FOLDER examples)
 target_compile_definitions(model PRIVATE FMI3_FUNCTION_PREFIX=M_)
-target_include_directories(model PRIVATE include VanDerPol)
+target_include_directories(model PRIVATE include BouncingBall)
 
-add_executable (model_exchange ${EXAMPLE_SOURCES} src/fmi3Functions.c VanDerPol/model.c src/slave.c examples/model_exchange.c)
+add_executable (model_exchange ${EXAMPLE_SOURCES} src/fmi3Functions.c BouncingBall/model.c src/slave.c examples/model_exchange.c)
 set_target_properties(model_exchange PROPERTIES FOLDER examples)
-target_include_directories(model_exchange PRIVATE include VanDerPol)
+target_include_directories(model_exchange PRIVATE include BouncingBall)
 target_link_libraries(model_exchange model)
 target_compile_definitions(model_exchange PRIVATE DISABLE_PREFIX)
